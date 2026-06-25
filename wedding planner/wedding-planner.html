@@ -1,0 +1,1098 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="manifest" href="manifest.json">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wedding Planner</title>
+<style>
+  :root {
+    --ivory: #FAF8F4;
+    --blush: #E8C4B8;
+    --blush-mid: #D4907A;
+    --blush-deep: #A0523A;
+    --sage: #7A9B7E;
+    --sage-light: #C8DBC9;
+    --sage-deep: #3E6843;
+    --slate: #5B6B7C;
+    --slate-light: #C5CDD6;
+    --slate-deep: #2D3E4E;
+    --gold: #C9A84C;
+    --gold-light: #F0DFA4;
+    --gold-deep: #7A5E1A;
+    --lavender: #9B8BBF;
+    --lavender-light: #D8D0EE;
+    --lavender-deep: #4E3D7A;
+    --surface: #FFFFFF;
+    --border: #E8E2D9;
+    --text: #2C2420;
+    --text-muted: #7A6E68;
+    --font-display: 'Playfair Display', Georgia, serif;
+    --font-body: 'Inter', system-ui, sans-serif;
+    --radius: 10px;
+    --radius-lg: 16px;
+  }
+
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Inter:wght@400;500;600&display=swap');
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--ivory); font-family: var(--font-body); color: var(--text); min-height: 100vh; }
+
+  /* SETUP SCREEN */
+  #setup-screen {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    background: linear-gradient(160deg, #FAF8F4 60%, #F0E4DC 100%);
+  }
+  .setup-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 2.5rem;
+    width: 100%;
+    max-width: 480px;
+    box-shadow: 0 4px 32px rgba(160,82,58,0.08);
+  }
+  .setup-logo {
+    text-align: center;
+    margin-bottom: 2rem;
+  }
+  .setup-logo .ring {
+    display: inline-block;
+    font-size: 2rem;
+    margin-bottom: .5rem;
+  }
+  .setup-logo h1 {
+    font-family: var(--font-display);
+    font-size: 2rem;
+    font-weight: 400;
+    color: var(--text);
+    letter-spacing: -0.01em;
+  }
+  .setup-logo p {
+    font-size: 14px;
+    color: var(--text-muted);
+    margin-top: 4px;
+  }
+  .field { margin-bottom: 1.25rem; }
+  .field label {
+    display: block;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 6px;
+  }
+  .field input, .field select {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    font-size: 15px;
+    font-family: var(--font-body);
+    background: var(--ivory);
+    color: var(--text);
+    outline: none;
+    transition: border-color .15s;
+  }
+  .field input:focus, .field select:focus { border-color: var(--blush-mid); }
+  .field .hint { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+  .btn-primary {
+    width: 100%;
+    padding: 12px;
+    background: var(--blush-mid);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius);
+    font-size: 15px;
+    font-weight: 600;
+    font-family: var(--font-body);
+    cursor: pointer;
+    transition: background .15s, transform .1s;
+    letter-spacing: 0.02em;
+    margin-top: .5rem;
+  }
+  .btn-primary:hover { background: var(--blush-deep); }
+  .btn-primary:active { transform: scale(0.99); }
+  .error-msg { color: #c0392b; font-size: 13px; margin-top: 8px; display: none; }
+
+  /* MAIN APP */
+  #app-screen { display: none; min-height: 100vh; }
+
+  /* TOP BAR */
+  .topbar {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 60px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .topbar-left { display: flex; align-items: center; gap: 14px; }
+  .topbar-title {
+    font-family: var(--font-display);
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--text);
+  }
+  .topbar-date {
+    font-size: 13px;
+    color: var(--text-muted);
+    background: var(--ivory);
+    padding: 4px 10px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+  }
+  .topbar-right { display: flex; align-items: center; gap: 12px; }
+  .btn-reset {
+    font-size: 13px;
+    color: var(--text-muted);
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 5px 12px;
+    cursor: pointer;
+    font-family: var(--font-body);
+  }
+  .btn-reset:hover { background: var(--ivory); color: var(--text); }
+
+  /* HERO STATS */
+  .hero {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 1.5rem 2rem;
+  }
+  .stats-row { display: flex; gap: 1.5rem; flex-wrap: wrap; align-items: center; }
+  .stat-block { text-align: center; }
+  .stat-block .stat-num {
+    font-family: var(--font-display);
+    font-size: 2rem;
+    font-weight: 600;
+    color: var(--blush-deep);
+    line-height: 1;
+  }
+  .stat-block .stat-label { font-size: 12px; color: var(--text-muted); margin-top: 2px; text-transform: uppercase; letter-spacing: 0.06em; }
+  .stat-divider { width: 1px; height: 48px; background: var(--border); }
+  .progress-wrap { flex: 1; min-width: 200px; }
+  .progress-label { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 6px; }
+  .progress-label span:first-child { color: var(--text-muted); }
+  .progress-label span:last-child { font-weight: 600; color: var(--sage-deep); }
+  .progress-bar { height: 8px; background: var(--border); border-radius: 4px; overflow: hidden; }
+  .progress-fill { height: 100%; border-radius: 4px; background: linear-gradient(90deg, var(--sage) 0%, var(--sage-deep) 100%); transition: width .4s ease; }
+
+  /* LAYOUT */
+  .app-body { display: flex; min-height: calc(100vh - 60px); }
+
+  /* SIDEBAR */
+  .sidebar {
+    width: 220px;
+    flex-shrink: 0;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    padding: 1.25rem 0;
+    position: sticky;
+    top: 60px;
+    height: calc(100vh - 60px);
+    overflow-y: auto;
+  }
+  .sidebar-section { padding: 0 1rem; margin-bottom: 1.5rem; }
+  .sidebar-heading {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    padding: 0 4px;
+    margin-bottom: 6px;
+  }
+  .cat-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 7px 10px;
+    background: none;
+    border: none;
+    border-radius: 8px;
+    font-size: 13px;
+    font-family: var(--font-body);
+    color: var(--text);
+    cursor: pointer;
+    text-align: left;
+    transition: background .12s;
+    margin-bottom: 2px;
+  }
+  .cat-btn:hover { background: var(--ivory); }
+  .cat-btn.active { background: var(--ivory); font-weight: 500; }
+  .cat-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+  .cat-count {
+    margin-left: auto;
+    font-size: 11px;
+    color: var(--text-muted);
+    background: var(--ivory);
+    border-radius: 10px;
+    padding: 1px 6px;
+    border: 1px solid var(--border);
+  }
+
+  /* MAIN CONTENT */
+  .main-content { flex: 1; padding: 1.5rem 2rem; max-width: 900px; }
+
+  /* FILTER TABS */
+  .filter-tabs { display: flex; gap: 8px; margin-bottom: 1.5rem; flex-wrap: wrap; }
+  .filter-tab {
+    padding: 5px 14px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    font-size: 13px;
+    font-family: var(--font-body);
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all .12s;
+  }
+  .filter-tab:hover { border-color: var(--blush); color: var(--text); }
+  .filter-tab.active { background: var(--blush-mid); border-color: var(--blush-mid); color: #fff; }
+
+  /* PHASE GROUP */
+  .phase-group { margin-bottom: 2rem; }
+  .phase-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: .75rem;
+    padding-bottom: .5rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .phase-title {
+    font-family: var(--font-display);
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text);
+    font-style: italic;
+  }
+  .phase-badge {
+    font-size: 12px;
+    color: var(--text-muted);
+    background: var(--ivory);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 2px 10px;
+  }
+  .phase-progress {
+    margin-left: auto;
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+
+  /* TASK CARD */
+  .task-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: .85rem 1rem;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    cursor: pointer;
+    transition: box-shadow .12s, border-color .12s;
+    position: relative;
+  }
+  .task-card:hover { border-color: var(--slate-light); box-shadow: 0 2px 12px rgba(0,0,0,0.06); }
+  .task-card.done { opacity: 0.55; }
+  .task-card.overdue { border-left: 3px solid #e74c3c; }
+  .task-card.upcoming { border-left: 3px solid var(--gold); }
+
+  .task-check {
+    width: 20px;
+    height: 20px;
+    border-radius: 5px;
+    border: 1.5px solid var(--border);
+    background: var(--ivory);
+    flex-shrink: 0;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 1px;
+    transition: all .12s;
+  }
+  .task-check:hover { border-color: var(--sage); }
+  .task-check.checked { background: var(--sage); border-color: var(--sage); }
+  .task-check.checked::after { content: '✓'; color: #fff; font-size: 12px; font-weight: 700; }
+
+  .task-body { flex: 1; min-width: 0; }
+  .task-top { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .task-name { font-size: 14px; font-weight: 500; color: var(--text); }
+  .task-card.done .task-name { text-decoration: line-through; color: var(--text-muted); }
+
+  .cat-pill {
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-weight: 500;
+    white-space: nowrap;
+  }
+  .task-deadline { font-size: 12px; color: var(--text-muted); margin-top: 3px; }
+  .task-deadline.overdue { color: #c0392b; font-weight: 500; }
+  .task-deadline.soon { color: var(--gold-deep); font-weight: 500; }
+  .task-note-preview { font-size: 12px; color: var(--text-muted); margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 500px; }
+  .task-expand { font-size: 11px; color: var(--blush-mid); margin-left: auto; flex-shrink: 0; align-self: center; }
+
+  /* TASK DETAIL DRAWER */
+  .drawer-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(44,36,32,.35);
+    z-index: 200;
+  }
+  .drawer {
+    position: fixed;
+    top: 0;
+    right: -480px;
+    width: 460px;
+    height: 100vh;
+    background: var(--surface);
+    box-shadow: -4px 0 32px rgba(0,0,0,.12);
+    z-index: 201;
+    transition: right .25s ease;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .drawer.open { right: 0; }
+  .drawer-header {
+    padding: 1.5rem 1.5rem 1rem;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  .drawer-header-info { flex: 1; }
+  .drawer-cat-pill { display: inline-block; margin-bottom: 8px; }
+  .drawer-title { font-family: var(--font-display); font-size: 1.3rem; font-weight: 600; line-height: 1.3; }
+  .drawer-close {
+    background: none;
+    border: none;
+    font-size: 20px;
+    cursor: pointer;
+    color: var(--text-muted);
+    padding: 0 4px;
+    line-height: 1;
+    flex-shrink: 0;
+  }
+  .drawer-close:hover { color: var(--text); }
+  .drawer-body { padding: 1.25rem 1.5rem; flex: 1; overflow-y: auto; }
+  .drawer-meta { display: flex; gap: 1rem; margin-bottom: 1.25rem; flex-wrap: wrap; }
+  .meta-item { font-size: 13px; }
+  .meta-item .meta-label { color: var(--text-muted); margin-bottom: 2px; text-transform: uppercase; font-size: 10px; letter-spacing: 0.06em; font-weight: 600; }
+  .meta-item .meta-val { color: var(--text); font-weight: 500; }
+  .drawer-section-title { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); margin-bottom: 8px; }
+  .drawer-detail { background: var(--ivory); border-radius: var(--radius); padding: 1rem; font-size: 14px; line-height: 1.7; color: var(--text); margin-bottom: 1.25rem; }
+  .drawer-tips { margin-bottom: 1.25rem; }
+  .tip-item { display: flex; gap: 8px; font-size: 13px; color: var(--text); margin-bottom: 6px; line-height: 1.5; }
+  .tip-item::before { content: '→'; color: var(--blush-mid); flex-shrink: 0; }
+  .notes-area {
+    width: 100%;
+    min-height: 90px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 10px 12px;
+    font-size: 14px;
+    font-family: var(--font-body);
+    color: var(--text);
+    background: var(--ivory);
+    resize: vertical;
+    outline: none;
+    transition: border-color .15s;
+  }
+  .notes-area:focus { border-color: var(--blush-mid); }
+  .drawer-footer {
+    padding: 1rem 1.5rem;
+    border-top: 1px solid var(--border);
+    display: flex;
+    gap: 10px;
+  }
+  .btn-done {
+    flex: 1;
+    padding: 10px;
+    border-radius: var(--radius);
+    font-size: 14px;
+    font-weight: 600;
+    font-family: var(--font-body);
+    cursor: pointer;
+    border: none;
+    transition: background .15s;
+  }
+  .btn-done.mark { background: var(--sage); color: #fff; }
+  .btn-done.mark:hover { background: var(--sage-deep); }
+  .btn-done.unmark { background: var(--ivory); color: var(--text); border: 1px solid var(--border); }
+  .btn-done.unmark:hover { background: var(--border); }
+  .btn-save-notes {
+    padding: 10px 18px;
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    font-size: 14px;
+    font-family: var(--font-body);
+    cursor: pointer;
+    color: var(--text-muted);
+  }
+  .btn-save-notes:hover { background: var(--ivory); color: var(--text); }
+
+  /* EMPTY STATE */
+  .empty-state { text-align: center; padding: 3rem 1rem; color: var(--text-muted); }
+  .empty-state p { font-size: 15px; }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  /* CATEGORY COLORS */
+  .cat-venue    { background: #E6F1FB; color: #0C447C; }
+  .cat-catering { background: #FAF0DC; color: #7A5E1A; }
+  .cat-guests   { background: #EAF3DE; color: #27500A; }
+  .cat-decor    { background: #FBEAF0; color: #72243E; }
+  .cat-admin    { background: #EEEDFE; color: #3C3489; }
+  .cat-photo    { background: #F0E8D8; color: #6B4226; }
+  .cat-beauty   { background: #FAE8F0; color: #8B2255; }
+  .cat-music    { background: #E8F0FA; color: #1A4080; }
+
+  .dot-venue    { background: #378ADD; }
+  .dot-catering { background: #BA7517; }
+  .dot-guests   { background: #639922; }
+  .dot-decor    { background: #D4537E; }
+  .dot-admin    { background: #7F77DD; }
+  .dot-photo    { background: #A0523A; }
+  .dot-beauty   { background: #C0527A; }
+  .dot-music    { background: #3A70C0; }
+
+  @media (max-width: 700px) {
+    .sidebar { display: none; }
+    .main-content { padding: 1rem; }
+    .stats-row { gap: 1rem; }
+    .drawer { width: 100%; right: -100%; }
+    .topbar { padding: 0 1rem; }
+    .hero { padding: 1rem; }
+  }
+</style>
+</head>
+<body>
+
+<!-- SETUP SCREEN -->
+<div id="setup-screen">
+  <div class="setup-card">
+    <div class="setup-logo">
+      <div class="ring">💍</div>
+      <h1>Wedding Planner</h1>
+      <p>Your personal countdown to the big day</p>
+    </div>
+    <div class="field">
+      <label>Wedding date</label>
+      <input type="date" id="inp-date" />
+    </div>
+    <div class="field">
+      <label>Couple's names</label>
+      <input type="text" id="inp-names" placeholder="e.g. Emma & James" />
+      <div class="hint">Appears on your planner header</div>
+    </div>
+    <div class="field">
+      <label>Estimated guest count</label>
+      <input type="number" id="inp-guests" placeholder="e.g. 120" min="1" max="2000" />
+    </div>
+    <div class="field">
+      <label>Total budget <span style="font-weight:400;text-transform:none;letter-spacing:0;">(optional)</span></label>
+      <input type="number" id="inp-budget" placeholder="e.g. 25000" min="0" />
+      <div class="hint">In your local currency</div>
+    </div>
+    <div class="error-msg" id="setup-error">Please enter a valid wedding date in the future.</div>
+    <button class="btn-primary" onclick="startPlanner()">Build my wedding planner →</button>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="app-screen">
+
+  <div class="topbar">
+    <div class="topbar-left">
+      <span class="topbar-title">💍 <span id="header-names">Wedding Planner</span></span>
+      <span class="topbar-date" id="header-countdown"></span>
+    </div>
+    <div class="topbar-right">
+      <button class="btn-reset" onclick="resetPlanner()">Start over</button>
+    </div>
+  </div>
+
+  <div class="hero">
+    <div class="stats-row">
+      <div class="stat-block">
+        <div class="stat-num" id="stat-days">—</div>
+        <div class="stat-label">Days to go</div>
+      </div>
+      <div class="stat-divider"></div>
+      <div class="stat-block">
+        <div class="stat-num" id="stat-done">0</div>
+        <div class="stat-label">Tasks done</div>
+      </div>
+      <div class="stat-divider"></div>
+      <div class="stat-block">
+        <div class="stat-num" id="stat-total">0</div>
+        <div class="stat-label">Total tasks</div>
+      </div>
+      <div class="stat-divider"></div>
+      <div class="progress-wrap">
+        <div class="progress-label">
+          <span>Overall progress</span>
+          <span id="progress-pct">0%</span>
+        </div>
+        <div class="progress-bar">
+          <div class="progress-fill" id="progress-fill" style="width:0%"></div>
+        </div>
+      </div>
+      <div id="budget-stat-wrap" style="display:none;">
+        <div class="stat-divider"></div>
+        <div class="stat-block">
+          <div class="stat-num" id="stat-budget" style="font-size:1.3rem;">—</div>
+          <div class="stat-label">Budget</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="app-body">
+    <nav class="sidebar">
+      <div class="sidebar-section">
+        <div class="sidebar-heading">Filter</div>
+        <button class="cat-btn active" onclick="filterCat('all')" id="cat-all">
+          <span class="cat-dot" style="background:var(--text-muted)"></span>
+          All tasks
+          <span class="cat-count" id="cnt-all">0</span>
+        </button>
+        <button class="cat-btn" onclick="filterCat('overdue')" id="cat-overdue">
+          <span class="cat-dot" style="background:#e74c3c"></span>
+          Overdue
+          <span class="cat-count" id="cnt-overdue">0</span>
+        </button>
+        <button class="cat-btn" onclick="filterCat('upcoming')" id="cat-upcoming">
+          <span class="cat-dot" style="background:var(--gold)"></span>
+          Due soon
+          <span class="cat-count" id="cnt-upcoming">0</span>
+        </button>
+        <button class="cat-btn" onclick="filterCat('done')" id="cat-done">
+          <span class="cat-dot" style="background:var(--sage)"></span>
+          Completed
+          <span class="cat-count" id="cnt-done">0</span>
+        </button>
+      </div>
+      <div class="sidebar-section">
+        <div class="sidebar-heading">Categories</div>
+        <button class="cat-btn" onclick="filterCat('venue')" id="cat-venue">
+          <span class="cat-dot dot-venue"></span>Venue
+          <span class="cat-count" id="cnt-venue">0</span>
+        </button>
+        <button class="cat-btn" onclick="filterCat('catering')" id="cat-catering">
+          <span class="cat-dot dot-catering"></span>Catering
+          <span class="cat-count" id="cnt-catering">0</span>
+        </button>
+        <button class="cat-btn" onclick="filterCat('guests')" id="cat-guests">
+          <span class="cat-dot dot-guests"></span>Guests
+          <span class="cat-count" id="cnt-guests">0</span>
+        </button>
+        <button class="cat-btn" onclick="filterCat('decor')" id="cat-decor">
+          <span class="cat-dot dot-decor"></span>Decor & flowers
+          <span class="cat-count" id="cnt-decor">0</span>
+        </button>
+        <button class="cat-btn" onclick="filterCat('photo')" id="cat-photo">
+          <span class="cat-dot dot-photo"></span>Photography
+          <span class="cat-count" id="cnt-photo">0</span>
+        </button>
+        <button class="cat-btn" onclick="filterCat('music')" id="cat-music">
+          <span class="cat-dot dot-music"></span>Music & audio
+          <span class="cat-count" id="cnt-music">0</span>
+        </button>
+        <button class="cat-btn" onclick="filterCat('beauty')" id="cat-beauty">
+          <span class="cat-dot dot-beauty"></span>Beauty & attire
+          <span class="cat-count" id="cnt-beauty">0</span>
+        </button>
+        <button class="cat-btn" onclick="filterCat('admin')" id="cat-admin">
+          <span class="cat-dot dot-admin"></span>Admin & legal
+          <span class="cat-count" id="cnt-admin">0</span>
+        </button>
+      </div>
+    </nav>
+
+    <main class="main-content">
+      <div class="filter-tabs">
+        <button class="filter-tab active" onclick="setStatusFilter('all', this)">All</button>
+        <button class="filter-tab" onclick="setStatusFilter('pending', this)">Pending</button>
+        <button class="filter-tab" onclick="setStatusFilter('done', this)">Completed</button>
+      </div>
+      <div id="timeline-container"></div>
+    </main>
+  </div>
+</div>
+
+<!-- TASK DRAWER -->
+<div class="drawer-overlay" id="drawer-overlay" onclick="closeDrawer()"></div>
+<div class="drawer" id="task-drawer">
+  <div class="drawer-header">
+    <div class="drawer-header-info">
+      <span class="cat-pill drawer-cat-pill" id="d-cat-pill"></span>
+      <div class="drawer-title" id="d-title"></div>
+    </div>
+    <button class="drawer-close" onclick="closeDrawer()">✕</button>
+  </div>
+  <div class="drawer-body">
+    <div class="drawer-meta" id="d-meta"></div>
+    <div class="drawer-section-title">What to do</div>
+    <div class="drawer-detail" id="d-detail"></div>
+    <div class="drawer-tips" id="d-tips"></div>
+    <div class="drawer-section-title">Your notes</div>
+    <textarea class="notes-area" id="d-notes" placeholder="Add notes, vendor contacts, quotes, links…"></textarea>
+  </div>
+  <div class="drawer-footer">
+    <button class="btn-done mark" id="d-toggle-btn" onclick="toggleFromDrawer()">Mark as done</button>
+    <button class="btn-save-notes" onclick="saveNotes()">Save notes</button>
+  </div>
+</div>
+
+<script>
+// ─── DATA ───────────────────────────────────────────────────────────────────
+
+const CAT_META = {
+  venue:    { label: 'Venue',          pillClass: 'cat-venue',    dotClass: 'dot-venue'    },
+  catering: { label: 'Catering',       pillClass: 'cat-catering', dotClass: 'dot-catering' },
+  guests:   { label: 'Guests',         pillClass: 'cat-guests',   dotClass: 'dot-guests'   },
+  decor:    { label: 'Decor & Flowers',pillClass: 'cat-decor',    dotClass: 'dot-decor'    },
+  photo:    { label: 'Photography',    pillClass: 'cat-photo',    dotClass: 'dot-photo'    },
+  music:    { label: 'Music',          pillClass: 'cat-music',    dotClass: 'dot-music'    },
+  beauty:   { label: 'Beauty & Attire',pillClass: 'cat-beauty',   dotClass: 'dot-beauty'   },
+  admin:    { label: 'Admin & Legal',  pillClass: 'cat-admin',    dotClass: 'dot-admin'    },
+};
+
+// Task template: { id, name, cat, monthsBefore, detail, tips[] }
+const TASK_TEMPLATES = [
+  // 18+ months
+  { id:'budget',      name:'Set your total budget',         cat:'admin',    mo:18, detail:'Establish a realistic budget before booking anything. Factor in venue, catering, photography, attire, flowers, music, transport, invitations, and a 10% buffer for surprises.', tips:['Research average costs in your area first','Decide who (family) is contributing and set clear expectations','Track spending in a spreadsheet from day one'] },
+  { id:'guestlist1',  name:'Draft initial guest list',      cat:'guests',   mo:18, detail:'Create a rough guest list to help size your venue search. Include A-list (must-invite) and B-list (would love to invite). Guest count drives almost every other vendor cost.', tips:['Be honest with yourselves — smaller weddings are often more intimate','Consider both families equally when drafting','Note plus-ones and children separately'] },
+  { id:'venue',       name:'Book your ceremony venue',      cat:'venue',    mo:18, detail:'Popular venues book out 12–18 months in advance. Visit at least 3–5 venues before deciding. Confirm catering exclusivity, noise curfews, parking, and what\'s included.', tips:['Ask for a full itemized breakdown of fees','Check noise ordinances if outdoor','Confirm the date is truly available in writing','Understand cancellation and refund policy'] },
+  { id:'reception',   name:'Book your reception venue',     cat:'venue',    mo:18, detail:'Your reception venue sets the tone for your entire event. Often the ceremony and reception are at the same location — if separate, factor in guest travel time and logistics.', tips:['Visit at different times of day to see lighting','Ask about minimum spend requirements','Confirm vendor restrictions (preferred vendors list)'] },
+  { id:'officiant',   name:'Hire an officiant',             cat:'admin',    mo:16, detail:'Book your officiant — whether a religious leader, civil celebrant, or ordained friend — early. Discuss the tone, length, and personalization of your ceremony.', tips:['If a friend, confirm they can legally perform ceremonies in your state/country','Meet in person to ensure a personality fit','Discuss vows — writing your own or traditional?'] },
+  { id:'catering1',   name:'Research catering options',     cat:'catering', mo:16, detail:'If your venue doesn\'t include catering, start researching caterers now. Consider style (plated, buffet, stations, family-style) and ask for tastings.', tips:['Request references from recent clients','Compare per-head costs including service charge and gratuity','Confirm dietary accommodation options'] },
+  { id:'photo1',      name:'Research photographers',        cat:'photo',    mo:16, detail:'Photography is one of the most important investments — these photos last forever. Review full gallery portfolios, not just highlight reels. Style matters: documentary vs posed.', tips:['Look at low-light photos from receptions','Ensure your styles are genuinely compatible','Ask if a second shooter is included'] },
+  { id:'videographer',name:'Research videographers',        cat:'photo',    mo:16, detail:'A wedding film captures moments photos can\'t — the vows spoken, first dance, laughter. Decide if you want a highlight reel, full ceremony, or both.', tips:['Watch multiple full-length films, not just 60-second reels','Ask about delivery format and timeline','Confirm drone footage is allowed at your venue'] },
+  { id:'honeymoon1',  name:'Start honeymoon research',      cat:'admin',    mo:16, detail:'Popular destinations and peak-season travel books up early. Decide on budget, destination type (beach, city, adventure), and duration. Apply for passports now if needed.', tips:['Check passport expiry dates — renew early','Travel agents can save you time and often get better rates','Consider travel insurance from the start'] },
+
+  // 12–15 months
+  { id:'photo2',      name:'Book photographer',             cat:'photo',    mo:14, detail:'Once you\'ve found your photographer, book with a signed contract and deposit. Confirm what\'s included: hours of coverage, number of edited photos, albums, engagement shoot.', tips:['Get everything in writing — deliverables and timeline','Confirm how long until you receive images','Discuss a shot list in advance'] },
+  { id:'catering2',   name:'Book caterer & do a tasting',   cat:'catering', mo:14, detail:'Sign your catering contract and schedule a tasting. Finalize menu direction, dietary options, and whether alcohol is included. Get all pricing itemized in writing.', tips:['Tasting is usually for 2–4 people — invite parents if they\'re contributing','Confirm staffing ratios for your guest count','Ask about late-night snack options — guests love it'] },
+  { id:'attire1',     name:'Shop for wedding attire',       cat:'beauty',   mo:14, detail:'Wedding dresses and suits need 4–6 months for ordering plus alterations. Start shopping now for the best selection. Bring only trusted opinions — too many voices create confusion.', tips:['Order 1 size up — it\'s easier to take in than let out','Budget for alterations separately (can be $300–$800)','Ask about preservation and cleaning services'] },
+  { id:'invites-design',name:'Design save the dates',       cat:'guests',   mo:14, detail:'Save the dates should be sent 12 months before for destination weddings, 6–8 months for local. Design should hint at your wedding style and palette.', tips:['Include date, general location, and wedding website','Don\'t feel obligated to send to everyone on your list yet','Digital save the dates save cost and are increasingly common'] },
+  { id:'florist',     name:'Meet with florists',            cat:'decor',    mo:13, detail:'Floral design shapes the visual atmosphere of your wedding. Research styles (garden, minimalist, lush, tropical) and get quotes from 3+ florists. Flowers are highly seasonal.', tips:['Bring inspiration images — Pinterest boards work well','Ask which flowers are in season for your date','Understand what\'s in your contract if flowers aren\'t available'] },
+  { id:'music1',      name:'Research bands or DJs',         cat:'music',    mo:13, detail:'Live music creates atmosphere but costs more. A DJ offers more flexibility and a wider library. Attend a live event your potential band is playing if possible.', tips:['Ask for a setlist or song library','Confirm they have backup equipment','Discuss do-not-play lists and special requests'] },
+  { id:'cake1',       name:'Research wedding cake bakers',  cat:'catering', mo:13, detail:'Wedding cakes are often booked 8–12 months out for popular bakers. Research styles, do tastings, and decide on flavors and design. Consider dietary needs.', tips:['Schedule tastings — this is the fun part','Ask about delivery, setup, and cutting fees','Confirm refrigeration at the venue if needed'] },
+
+  // 9–12 months
+  { id:'invites-send', name:'Send save the dates',          cat:'guests',   mo:12, detail:'Send save the dates to confirmed guests. For destination weddings, send even earlier. Include your wedding website URL so guests can find information easily.', tips:['Mail to those without email even if you go digital','Address families together when possible','Track replies with a spreadsheet or app'] },
+  { id:'music2',      name:'Book band or DJ',               cat:'music',    mo:11, detail:'Sign your music contract now — good entertainers fill up fast. Confirm their timeline, equipment needs, setup time, and how they handle requests.', tips:['Provide your must-play and do-not-play lists','Confirm MC services — will they announce events?','Discuss volume levels and curfew with them'] },
+  { id:'florist2',    name:'Book florist',                  cat:'decor',    mo:11, detail:'Sign with your chosen florist. Finalize centerpiece concepts, bridal bouquet style, ceremony arch or altar florals, boutonnieres, and any other arrangements needed.', tips:['Create a mood board together','Confirm delivery and setup time at the venue','Get a breakdown of each arrangement cost'] },
+  { id:'website',     name:'Launch wedding website',        cat:'admin',    mo:11, detail:'A wedding website centralizes all guest info: venue details, accommodation options, registry links, RSVP, and FAQs. Free platforms include The Knot, Zola, and Squarespace.', tips:['Include hotel block info if you have one','Add your love story if you like — guests enjoy it','Make sure mobile experience is clean'] },
+  { id:'hotel-block', name:'Reserve hotel room block',      cat:'guests',   mo:11, detail:'Negotiate a room block at 1–2 hotels near your venue. Guests appreciate the convenience and you often get a group rate. You typically don\'t have to guarantee all rooms.', tips:['Ask about attrition clauses — what happens if rooms aren\'t filled','Reserve blocks at different price points','Include details on your wedding website immediately'] },
+  { id:'cake2',       name:'Book wedding cake baker',       cat:'catering', mo:10, detail:'Schedule your cake tasting and book your baker. Finalize flavors, frosting style, design concept, and size based on your guest count. Confirm delivery and setup.', tips:['Order slightly more than your exact guest count','Ask about preserving the top tier for your first anniversary','Confirm allergies your baker needs to know about'] },
+  { id:'transport',   name:'Arrange wedding party transport',cat:'admin',   mo:10, detail:'Book transportation for the wedding party between ceremony, portraits, and reception. Limos, vintage cars, party buses, or shuttle services — all book up for weekends.', tips:['Consider a shuttle for guests between hotel and venue','Ask about waiting time and overtime fees','Confirm the driver knows all locations'] },
+  { id:'rings',       name:'Shop for wedding rings',        cat:'beauty',   mo:10, detail:'Allow 2–3 months for custom rings to be made plus time for resizing. Shop together or plan a surprise. Consider metal, stone, style, and engraving.', tips:['Get ring sizes properly measured at a jeweler','Budget for engraving if desired','Insure rings immediately after purchase'] },
+
+  // 6–9 months
+  { id:'attire2',     name:'Order wedding attire',          cat:'beauty',   mo:8, detail:'Place your final order for wedding dress, bridesmaid dresses, groomsmen suits or tuxedos. Confirm delivery timeframes and schedule first alterations fitting.', tips:['Bridesmaid dresses take 3–4 months — order now','Groomsmen suits can often be ordered closer — confirm timing','Schedule all alterations appointments in advance'] },
+  { id:'invites-order',name:'Order wedding invitations',    cat:'guests',   mo:7, detail:'Order invitations with enough time for customization, printing, addressing, and mailing. They should arrive to guests 6–8 weeks before the wedding.', tips:['Order 15% more than your guest count for errors and keepsakes','Use a calligrapher or print address labels to save time','Include RSVP deadline 4 weeks before your wedding'] },
+  { id:'rehearsal',   name:'Plan rehearsal dinner',         cat:'admin',    mo:7, detail:'The rehearsal dinner follows your ceremony rehearsal (typically the night before). Usually hosted by the groom\'s family but traditions vary. Book a restaurant or private venue now.', tips:['Include: immediate family, wedding party + dates, out-of-town guests','Consider a casual vibe — guests are nervous enough for the big day','Plan a slide show or welcome speeches here rather than the reception'] },
+  { id:'menu',        name:'Finalize catering menu',        cat:'catering', mo:7, detail:'Confirm all menu details with your caterer: appetizers, dinner, dessert, dietary alternatives, late-night options, and bar packages. Final guest numbers usually due 2 weeks out.', tips:['Get vegetarian, vegan, and gluten-free counts early','Confirm open bar vs consumption vs package pricing','Discuss how dietary restrictions will be handled at service'] },
+  { id:'hair-makeup', name:'Book hair & makeup artists',    cat:'beauty',   mo:7, detail:'Popular stylists book out 6+ months. Book one for the bride plus any additional artists for the wedding party. Schedule a hair and makeup trial 1–2 months before.', tips:['Do the trial around the same time of day as your wedding','Test longevity — wear the look for a full day','Confirm they travel to your getting-ready location'] },
+  { id:'guestlist2',  name:'Finalize guest list',           cat:'guests',   mo:7, detail:'Lock in your final guest list before invitation printing. Make final decisions on B-list invites. Collect mailing addresses for all guests.', tips:['Use a Google Form or The Knot to collect addresses','Be consistent — if you start plus-ones, extend to all in same tier','Review children policy now before invitations go out'] },
+  { id:'registry',    name:'Complete gift registry',        cat:'admin',    mo:7, detail:'Create registries at 2–3 places (different price points) plus a honeymoon fund if applicable. Include a range from $25 to $300+ to suit different budgets.', tips:['Register for more than you think — guests want options','Include everyday items, not just special-occasion things','Consider charity donations or experience funds as alternatives'] },
+
+  // 3–6 months
+  { id:'invites-mail', name:'Mail wedding invitations',     cat:'guests',   mo:6, detail:'Invitations should reach guests at least 6–8 weeks before the wedding. Mail certified/tracked if possible. Include all inserts: RSVP card, accommodation info, map.', tips:['Hand-cancel stamps at the post office for delicate envelopes','Mail one to yourself to confirm timing and quality','Send digital backup to anyone whose invite might get lost'] },
+  { id:'ceremony-plan',name:'Plan ceremony structure',      cat:'admin',    mo:5, detail:'Work with your officiant to finalize the ceremony script: processional order, readings, vows, ring exchange, unity ritual, and recessional. Practice the flow.', tips:['Write personal vows now — don\'t leave it until the last week','Decide on music for processional and recessional','Confirm who is doing readings and brief them'] },
+  { id:'decor',       name:'Book additional decor rentals', cat:'decor',    mo:5, detail:'Finalize any rental items: tables, chairs, linens, lighting, arches, lounge furniture, signage. Coordinate with your venue on setup and breakdown windows.', tips:['Ask venue what they already provide','Coordinate rental delivery with your venue timeline','Consider what you can DIY vs rent vs buy'] },
+  { id:'photo-list',  name:'Create photo shot list',        cat:'photo',    mo:4, detail:'Share a detailed shot list with your photographer: must-have family combinations, special moments, key detail shots, and locations. Designate a family member to help wrangle for portraits.', tips:['Keep the formal portrait list tight — each pose takes 3–5 min','Share names (not just relationships) for family groupings','Discuss golden hour portraits if sunset is during your reception'] },
+  { id:'music-list',  name:'Submit music playlist & requests', cat:'music', mo:4, detail:'Finalize all special songs: processional, recessional, first dance, parent dances, cake cutting, last dance, dinner music. Submit your do-not-play list to your DJ or band.', tips:['Include song names AND artist for clarity','Discuss how you want requests handled during dancing','Test your first dance song — practice the actual dance'] },
+  { id:'rsvp-follow', name:'Follow up on RSVPs',            cat:'guests',   mo:3, detail:'RSVP deadline should be about 4 weeks before the wedding. Chase non-responders personally via phone or text. You need firm numbers for catering, seating, and favors.', tips:['Assume no response = not coming for planning purposes','Be direct — a quick text is always appreciated over passive waiting','Update your headcount with your venue and caterer once confirmed'] },
+  { id:'rehearsal-book',name:'Book rehearsal venue',        cat:'admin',    mo:3, detail:'Book your rehearsal ceremony location and confirm the rehearsal dinner restaurant. Send rehearsal details to the wedding party and immediate family.', tips:['Plan 60–90 minutes for the rehearsal itself','Have your officiant lead — they know the flow','Brief everyone: what to bring, where to stand, the order of events'] },
+
+  // 1–3 months
+  { id:'seating',     name:'Create seating chart',          cat:'guests',   mo:2, detail:'Once RSVPs are finalized, create your seating arrangement. Use a tool like All Seated or a spreadsheet. Group guests by connection — family, work colleagues, mutual friends.', tips:['Mix friend groups if you want people to mingle','Put high-energy tables near the dance floor','Don\'t seat feuding relatives anywhere near each other','Consider accessibility needs for elderly guests'] },
+  { id:'favors',      name:'Order wedding favors',          cat:'decor',    mo:2, detail:'Favors are a small token of appreciation for guests. They can be edible (cookies, candles, seeds), charitable donations, or personalized keepsakes. Quantity matches your final headcount.', tips:['Order extra for vendors and unexpected guests','Many couples skip favors now — a donation in guests\' names is loved','Set up and display matters — don\'t leave them in a pile'] },
+  { id:'trial',       name:'Hair & makeup trial',           cat:'beauty',   mo:2, detail:'Do your hair and makeup trial 4–8 weeks before the wedding. Test the full look, bring your veil/headpiece, and take photos in natural and artificial light.', tips:['Wear a button-down shirt — easy to remove without ruining hair','Photograph the look from every angle','Give clear feedback so changes can be made before the day'] },
+  { id:'confirm-vendors',name:'Confirm all vendors',        cat:'admin',    mo:1, detail:'Reach out to every vendor to confirm final details: arrival times, location, contact on the day, final payments. Share a day-of timeline with everyone.', tips:['Create a vendor contact sheet with phone numbers','Confirm who your point of contact is on the wedding day','Send your timeline to venue coordinator, caterer, and photographer'] },
+  { id:'payments',    name:'Settle final vendor payments',  cat:'admin',    mo:1, detail:'Most vendors require final payment 1–2 weeks before the wedding. Prepare envelopes for gratuities to distribute on the wedding day. Track every payment made.', tips:['Assign gratuity envelopes to a trusted person (coordinator, parent)','Confirm accepted payment methods — some vendors don\'t take card','Keep all receipts and contracts in one folder'] },
+  { id:'packed',      name:'Pack for honeymoon & hotel',    cat:'admin',    mo:1, detail:'Pack your honeymoon bags and a wedding night bag early — the last week is hectic. Arrange for bags to be taken to the hotel by someone you trust the day before.', tips:['Pack your going-away outfit and overnight bag separately','Give your bags to a trusted family member or coordinator','Confirm all travel documents, passports, and bookings'] },
+
+  // Week of
+  { id:'rehearsal-do',name:'Wedding rehearsal',             cat:'admin',    mo:0.25, detail:'Walk through the full ceremony with your wedding party, officiant, and immediate family. Confirm processional order, where everyone stands, and all cues.', tips:['Do this the evening before the wedding','Keep it light-hearted — nerves are normal','Brief the best man and maid of honor on their day-of duties'] },
+  { id:'day-of-kit',  name:'Prepare wedding day emergency kit', cat:'admin',mo:0.25, detail:'Pack a kit with: safety pins, fashion tape, stain remover pen, pain reliever, antacids, blotting papers, touch-up makeup, snacks, phone charger, and a sewing kit.', tips:['Assign the kit to your maid of honor or coordinator','Include a list of all vendor contacts','Add a copy of your ceremony script and timeline'] },
+  { id:'delegate',    name:'Brief your day-of coordinator', cat:'admin',    mo:0.25, detail:'Whether a professional or a trusted person, brief your coordinator on every detail: vendor timeline, layout diagram, emergency contacts, and where everything is stored.', tips:['Give them the vendor contact sheet','Walk through the venue together the day before','Empower them to make small decisions so you don\'t have to'] },
+];
+
+// ─── STATE ────────────────────────────────────────────────────────────────────
+
+let state = {
+  weddingDate: null,
+  names: '',
+  guests: 0,
+  budget: null,
+  tasks: [],
+  activeFilter: 'all',
+  statusFilter: 'all',
+  openTaskId: null,
+};
+
+function loadState() {
+  try {
+    const saved = localStorage.getItem('wedding-planner-v2');
+    if (saved) { state = JSON.parse(saved); return true; }
+  } catch(e) {}
+  return false;
+}
+function saveState() {
+  localStorage.setItem('wedding-planner-v2', JSON.stringify(state));
+}
+
+// ─── SETUP ────────────────────────────────────────────────────────────────────
+
+function startPlanner() {
+  const dateVal = document.getElementById('inp-date').value;
+  const names   = document.getElementById('inp-names').value.trim();
+  const guests  = parseInt(document.getElementById('inp-guests').value) || 100;
+  const budget  = parseFloat(document.getElementById('inp-budget').value) || null;
+  const err     = document.getElementById('setup-error');
+
+  if (!dateVal) { err.style.display = 'block'; err.textContent = 'Please enter your wedding date.'; return; }
+  const wd = new Date(dateVal + 'T12:00:00');
+  if (wd <= new Date()) { err.style.display = 'block'; err.textContent = 'Wedding date must be in the future.'; return; }
+  err.style.display = 'none';
+
+  state.weddingDate = dateVal;
+  state.names = names || 'Your Wedding';
+  state.guests = guests;
+  state.budget = budget;
+  state.tasks = buildTasks(wd);
+  state.activeFilter = 'all';
+  state.statusFilter = 'all';
+  saveState();
+  showApp();
+}
+
+function buildTasks(weddingDate) {
+  return TASK_TEMPLATES.map(tmpl => {
+    const deadline = new Date(weddingDate);
+    deadline.setMonth(deadline.getMonth() - tmpl.mo);
+    // For week-of tasks, set day-relative offset
+    if (tmpl.mo === 0.25) {
+      deadline.setTime(weddingDate.getTime());
+      deadline.setDate(weddingDate.getDate() - 2);
+    }
+    return {
+      id: tmpl.id,
+      name: tmpl.name,
+      cat: tmpl.cat,
+      deadline: deadline.toISOString().split('T')[0],
+      detail: tmpl.detail,
+      tips: tmpl.tips,
+      done: false,
+      notes: '',
+    };
+  }).sort((a,b) => a.deadline.localeCompare(b.deadline));
+}
+
+function showApp() {
+  document.getElementById('setup-screen').style.display = 'none';
+  document.getElementById('app-screen').style.display = 'block';
+
+  const wd = new Date(state.weddingDate + 'T12:00:00');
+  const now = new Date();
+  const days = Math.ceil((wd - now) / 86400000);
+
+  document.getElementById('header-names').textContent = state.names;
+  document.getElementById('header-countdown').textContent = days > 0 ? `${days} days away` : 'Today!';
+  document.getElementById('stat-days').textContent = days > 0 ? days : '🎉';
+
+  if (state.budget) {
+    document.getElementById('budget-stat-wrap').style.display = '';
+    document.getElementById('stat-budget').textContent = '$' + Number(state.budget).toLocaleString();
+  }
+
+  renderAll();
+}
+
+function resetPlanner() {
+  if (!confirm('Start over? This will clear all your progress.')) return;
+  localStorage.removeItem('wedding-planner-v2');
+  location.reload();
+}
+
+// ─── RENDER ───────────────────────────────────────────────────────────────────
+
+function renderAll() {
+  updateStats();
+  renderTimeline();
+}
+
+function updateStats() {
+  const tasks = state.tasks;
+  const done = tasks.filter(t => t.done).length;
+  const total = tasks.length;
+  const pct = total ? Math.round(done/total*100) : 0;
+
+  document.getElementById('stat-done').textContent = done;
+  document.getElementById('stat-total').textContent = total;
+  document.getElementById('progress-pct').textContent = pct + '%';
+  document.getElementById('progress-fill').style.width = pct + '%';
+
+  const today = new Date().toISOString().split('T')[0];
+  const soon = new Date(); soon.setDate(soon.getDate()+30);
+  const soonStr = soon.toISOString().split('T')[0];
+
+  const cats = ['venue','catering','guests','decor','photo','music','beauty','admin'];
+  cats.forEach(c => {
+    document.getElementById('cnt-'+c).textContent = tasks.filter(t=>t.cat===c).length;
+  });
+  document.getElementById('cnt-all').textContent = total;
+  document.getElementById('cnt-done').textContent = done;
+  document.getElementById('cnt-overdue').textContent = tasks.filter(t=>!t.done && t.deadline < today).length;
+  document.getElementById('cnt-upcoming').textContent = tasks.filter(t=>!t.done && t.deadline >= today && t.deadline <= soonStr).length;
+}
+
+function filterCat(cat) {
+  state.activeFilter = cat;
+  document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+  const btn = document.getElementById('cat-' + cat);
+  if (btn) btn.classList.add('active');
+  renderTimeline();
+}
+
+function setStatusFilter(val, el) {
+  state.statusFilter = val;
+  document.querySelectorAll('.filter-tab').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  renderTimeline();
+}
+
+function getFilteredTasks() {
+  const today = new Date().toISOString().split('T')[0];
+  const soon = new Date(); soon.setDate(soon.getDate()+30);
+  const soonStr = soon.toISOString().split('T')[0];
+  let tasks = state.tasks;
+
+  if (state.activeFilter === 'overdue')  tasks = tasks.filter(t => !t.done && t.deadline < today);
+  else if (state.activeFilter === 'upcoming') tasks = tasks.filter(t => !t.done && t.deadline >= today && t.deadline <= soonStr);
+  else if (state.activeFilter === 'done') tasks = tasks.filter(t => t.done);
+  else if (state.activeFilter !== 'all') tasks = tasks.filter(t => t.cat === state.activeFilter);
+
+  if (state.statusFilter === 'done') tasks = tasks.filter(t => t.done);
+  else if (state.statusFilter === 'pending') tasks = tasks.filter(t => !t.done);
+
+  return tasks;
+}
+
+function renderTimeline() {
+  const container = document.getElementById('timeline-container');
+  const tasks = getFilteredTasks();
+  if (!tasks.length) {
+    container.innerHTML = '<div class="empty-state"><p>No tasks match this filter.</p></div>';
+    return;
+  }
+
+  // Group by phase
+  const phases = groupByPhase(tasks);
+  let html = '';
+  for (const phase of phases) {
+    const done = phase.tasks.filter(t=>t.done).length;
+    html += `<div class="phase-group">
+      <div class="phase-header">
+        <span class="phase-title">${phase.label}</span>
+        <span class="phase-badge">${phase.range}</span>
+        <span class="phase-progress">${done}/${phase.tasks.length} done</span>
+      </div>`;
+    for (const task of phase.tasks) {
+      html += renderTask(task);
+    }
+    html += '</div>';
+  }
+  container.innerHTML = html;
+}
+
+function groupByPhase(tasks) {
+  const wd = new Date(state.weddingDate + 'T12:00:00');
+  const buckets = [
+    { label: '18+ months before',  range: 'Start here',         minMo: 15, maxMo: 999 },
+    { label: '12–15 months before', range: 'Book the essentials', minMo: 11, maxMo: 15 },
+    { label: '9–12 months before',  range: 'Lock in the details', minMo: 8,  maxMo: 11 },
+    { label: '6–9 months before',   range: 'Attire & invites',    minMo: 5,  maxMo: 8  },
+    { label: '3–6 months before',   range: 'Finalize everything', minMo: 2,  maxMo: 5  },
+    { label: '1–3 months before',   range: 'Almost there',        minMo: 0,  maxMo: 2  },
+    { label: 'Week of the wedding', range: 'Final countdown',     minMo: -1, maxMo: 0  },
+  ];
+
+  const result = [];
+  for (const b of buckets) {
+    const matching = tasks.filter(t => {
+      const dl = new Date(t.deadline + 'T12:00:00');
+      const monthsBefore = (wd - dl) / (1000*60*60*24*30.44);
+      return monthsBefore >= b.minMo && monthsBefore < b.maxMo;
+    });
+    if (matching.length) result.push({ ...b, tasks: matching });
+  }
+  // Fallback: uncategorized
+  const placed = result.flatMap(b=>b.tasks.map(t=>t.id));
+  const rest = tasks.filter(t=>!placed.includes(t.id));
+  if (rest.length) result.push({ label:'Other', range:'', tasks: rest });
+  return result;
+}
+
+function renderTask(task) {
+  const today = new Date().toISOString().split('T')[0];
+  const soon = new Date(); soon.setDate(soon.getDate()+30);
+  const soonStr = soon.toISOString().split('T')[0];
+  const cat = CAT_META[task.cat] || CAT_META.admin;
+
+  let cardClass = 'task-card';
+  let deadlineClass = 'task-deadline';
+  let deadlineLabel = formatDate(task.deadline);
+
+  if (!task.done && task.deadline < today) {
+    cardClass += ' overdue'; deadlineClass += ' overdue'; deadlineLabel = '⚠ Overdue · ' + formatDate(task.deadline);
+  } else if (!task.done && task.deadline <= soonStr) {
+    cardClass += ' upcoming'; deadlineClass += ' soon'; deadlineLabel = '⏰ Due soon · ' + formatDate(task.deadline);
+  }
+  if (task.done) cardClass += ' done';
+
+  return `<div class="${cardClass}" onclick="openTask('${task.id}')">
+    <div class="task-check ${task.done?'checked':''}" onclick="toggleTask(event,'${task.id}')"></div>
+    <div class="task-body">
+      <div class="task-top">
+        <span class="task-name">${task.name}</span>
+        <span class="cat-pill ${cat.pillClass}">${cat.label}</span>
+      </div>
+      <div class="${deadlineClass}">${deadlineLabel}</div>
+      ${task.notes ? `<div class="task-note-preview">${task.notes}</div>` : ''}
+    </div>
+    <span class="task-expand">Details →</span>
+  </div>`;
+}
+
+function formatDate(dateStr) {
+  const d = new Date(dateStr + 'T12:00:00');
+  return d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+}
+
+// ─── TASK INTERACTIONS ───────────────────────────────────────────────────────
+
+function toggleTask(e, id) {
+  e.stopPropagation();
+  const task = state.tasks.find(t=>t.id===id);
+  if (!task) return;
+  task.done = !task.done;
+  saveState();
+  renderAll();
+}
+
+function openTask(id) {
+  const task = state.tasks.find(t=>t.id===id);
+  if (!task) return;
+  state.openTaskId = id;
+  const cat = CAT_META[task.cat] || CAT_META.admin;
+  const today = new Date().toISOString().split('T')[0];
+  const soon = new Date(); soon.setDate(soon.getDate()+30);
+
+  document.getElementById('d-cat-pill').textContent = cat.label;
+  document.getElementById('d-cat-pill').className = 'cat-pill drawer-cat-pill ' + cat.pillClass;
+  document.getElementById('d-title').textContent = task.name;
+
+  let statusLabel = 'Pending';
+  if (task.done) statusLabel = '✓ Completed';
+  else if (task.deadline < today) statusLabel = '⚠ Overdue';
+  else if (task.deadline <= soon.toISOString().split('T')[0]) statusLabel = '⏰ Due soon';
+
+  document.getElementById('d-meta').innerHTML = `
+    <div class="meta-item"><div class="meta-label">Deadline</div><div class="meta-val">${formatDate(task.deadline)}</div></div>
+    <div class="meta-item"><div class="meta-label">Status</div><div class="meta-val">${statusLabel}</div></div>
+    <div class="meta-item"><div class="meta-label">Category</div><div class="meta-val">${cat.label}</div></div>
+  `;
+
+  document.getElementById('d-detail').textContent = task.detail;
+
+  const tmpl = TASK_TEMPLATES.find(t=>t.id===id);
+  const tips = tmpl ? tmpl.tips : [];
+  document.getElementById('d-tips').innerHTML = tips.length
+    ? `<div class="drawer-section-title">Tips</div>` + tips.map(tip=>`<div class="tip-item">${tip}</div>`).join('')
+    : '';
+
+  document.getElementById('d-notes').value = task.notes || '';
+
+  const btn = document.getElementById('d-toggle-btn');
+  btn.textContent = task.done ? 'Mark as not done' : 'Mark as done';
+  btn.className = 'btn-done ' + (task.done ? 'unmark' : 'mark');
+
+  document.getElementById('drawer-overlay').style.display = 'block';
+  document.getElementById('task-drawer').classList.add('open');
+}
+
+function closeDrawer() {
+  document.getElementById('drawer-overlay').style.display = 'none';
+  document.getElementById('task-drawer').classList.remove('open');
+  state.openTaskId = null;
+}
+
+function toggleFromDrawer() {
+  if (!state.openTaskId) return;
+  const task = state.tasks.find(t=>t.id===state.openTaskId);
+  if (!task) return;
+  task.done = !task.done;
+  saveState();
+  openTask(state.openTaskId);
+  renderAll();
+}
+
+function saveNotes() {
+  if (!state.openTaskId) return;
+  const task = state.tasks.find(t=>t.id===state.openTaskId);
+  if (!task) return;
+  task.notes = document.getElementById('d-notes').value;
+  saveState();
+  renderAll();
+  const btn = document.querySelector('.btn-save-notes');
+  const orig = btn.textContent;
+  btn.textContent = 'Saved ✓';
+  setTimeout(() => { btn.textContent = orig; }, 1500);
+}
+
+// ─── INIT ────────────────────────────────────────────────────────────────────
+
+window.addEventListener('load', () => {
+  // Pre-set min date
+  const minDate = new Date();
+  minDate.setMonth(minDate.getMonth() + 1);
+  document.getElementById('inp-date').min = minDate.toISOString().split('T')[0];
+
+  if (loadState() && state.weddingDate) {
+    showApp();
+  }
+});
+</script>
+</body>
+</html>
